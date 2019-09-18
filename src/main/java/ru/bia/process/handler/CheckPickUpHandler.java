@@ -6,9 +6,6 @@ import org.kie.api.runtime.process.WorkItemManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -23,10 +20,12 @@ public class CheckPickUpHandler implements WorkItemHandler {
         for (Map.Entry<String, Object> parameter : workItem.getParameters().entrySet()) {
             logger.info("Name: " + parameter.getKey() + ", Value: " + parameter.getValue());
         }
+        boolean isSucceded = Math.random() < 0.5;
         Map<String, Object> result = new HashMap<String, Object>() {{
-            put("status", Math.random() < 0.5 ? "succeeded" : "running"); // отдаем рандомный булеан
+            put("status", isSucceded ? "succeeded" : "running"); // отдаем рандомный булеан
             put("arriveAt", workItem.getParameter("arriveAt"));
             put("numberPlate", workItem.getParameter("numberPlate"));
+            put("pickUpAt", isSucceded ? new Date() : null);
         }};
         result.forEach((key, value) -> logger.info("Result key:{}, Result value:{}", key, value));
         workItemManager.completeWorkItem(workItem.getId(), result);
