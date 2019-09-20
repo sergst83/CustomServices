@@ -2,17 +2,22 @@ package client.impl;
 
 import client.RESTServiceException;
 import client.RestClient;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import ru.bia.process.model.Order;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -24,12 +29,46 @@ public class RestClientImpl implements RestClient {
 
     @Override
     public Map<String, Object> createPickUpOperation(Map<String, Object> params) throws IOException {
-        String url = (String) params.getOrDefault("url", defaultUrl);
+        String url = getUrl(params);
         HttpPost post = new HttpPost(url);
-        String jsonBody = "";
+        Order order = (Order) params.get("order");
+        String jsonBody = createRequestBody(order);
         HttpEntity httpEntity = new StringEntity(jsonBody, ContentType.APPLICATION_JSON);
         post.setEntity(httpEntity);
         return performRequest(post);
+    }
+
+    @Override
+    public Map<String, Object> checkPickUpOperation(Map<String, Object> parameters) throws IOException, RESTServiceException {
+        String url = getUrl(parameters);
+        String id = (String) parameters.get("id");
+        HttpGet get = new HttpGet(url + "/" + id);
+        return performRequest(get);
+    }
+
+    @Override
+    public Map<String, Object> createPutWhOperation(Map<String, Object> parameters) throws IOException, RESTServiceException {
+        String url = getUrl(parameters);
+        String id = (String) parameters.get("id");
+        HttpPut httpPut = new HttpPut(url + "/warehouse/" + id);
+        return performRequest(httpPut);
+    }
+
+    @Override
+    public Map<String, Object> checkPutWhOperation(Map<String, Object> parameters) throws IOException, RESTServiceException {
+        String url = getUrl(parameters);
+        String id = (String) parameters.get("id");
+        HttpGet httpGet = new HttpGet(url + "/warehouse/" + id);
+        return performRequest(httpGet);
+    }
+
+    private String createRequestBody(Object params) throws JsonProcessingException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        return objectMapper.writeValueAsString(params);
+    }
+
+    private String getUrl(Map<String, Object> parameters) {
+        return StringUtils.defaultIfBlank((String) parameters.get("url"), defaultUrl);
     }
 
     private Map<String, Object> performRequest(HttpUriRequest request) throws IOException {
@@ -51,7 +90,7 @@ public class RestClientImpl implements RestClient {
         if (responseCode >= 200 && responseCode < 300) {
             return postProcessResult(responseBody, contentType);
         } else {
-            throw new RESTServiceException(responseCode, responseBody, request.getURI().toString());
+            throw new RESTServiceException(responseCode, StringUtils.substring(responseBody, 0, 254), request.getURI().toString());
         }
     }
 
