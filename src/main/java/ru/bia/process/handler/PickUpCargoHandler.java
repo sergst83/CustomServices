@@ -2,9 +2,10 @@ package ru.bia.process.handler;
 
 import client.RestClient;
 import client.impl.RestClientImpl;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jbpm.process.workitem.core.AbstractLogOrThrowWorkItemHandler;
 import org.jbpm.process.workitem.core.util.Wid;
-import org.jbpm.process.workitem.core.util.WidMavenDepends;
 import org.jbpm.process.workitem.core.util.WidParameter;
 import org.jbpm.process.workitem.core.util.WidResult;
 import org.kie.api.runtime.process.WorkItem;
@@ -13,6 +14,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import ru.bia.process.model.Order;
 
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -56,7 +58,15 @@ public class PickUpCargoHandler extends AbstractLogOrThrowWorkItemHandler {
         String status = (String) response.get("status" );
         String orderId = (String) response.get("id" );
         String numberPlate = (String) response.get("numberPlate");
-        Date arriveAt = (Date) response.get("arriveAt");
+        MutableObject<Date> arriveAt = new MutableObject<>();
+        try {
+            String a = (String) response.get("arriveAt");
+            if (a != null) {
+                arriveAt.setValue(new StdDateFormat().parse(a));
+            }
+        } catch (ParseException e) {
+            handleException(e);
+        }
 
         Order order = (Order) workItem.getParameter("order");
         order.setId(orderId);
@@ -65,7 +75,7 @@ public class PickUpCargoHandler extends AbstractLogOrThrowWorkItemHandler {
             put("status", status);
             put("order", order);
             put("numberPlate", numberPlate);
-            put("arriveAt", arriveAt);
+            put("arriveAt", arriveAt.getValue());
         }};
 
         result.forEach((key, value) -> logger.info("Result key:{}, Result value:{}", key, value));

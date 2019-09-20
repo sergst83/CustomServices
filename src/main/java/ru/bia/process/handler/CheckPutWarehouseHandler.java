@@ -2,6 +2,8 @@ package ru.bia.process.handler;
 
 import client.RestClient;
 import client.impl.RestClientImpl;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jbpm.process.workitem.core.AbstractLogOrThrowWorkItemHandler;
 import org.jbpm.process.workitem.core.util.Wid;
 import org.jbpm.process.workitem.core.util.WidParameter;
@@ -11,6 +13,7 @@ import org.kie.api.runtime.process.WorkItemManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.ParseException;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -47,17 +50,25 @@ public class CheckPutWarehouseHandler extends AbstractLogOrThrowWorkItemHandler 
 
         Map<String, Object> response = Collections.emptyMap();
         try {
-            response = restClient.createPutWhOperation(workItem.getParameters());
+            response = restClient.checkPutWhOperation(workItem.getParameters());
         } catch (Exception e) {
             handleException(e);
         }
 
         String status = (String) response.get("putWhStatus");
-        Date puttedAt = (Date) response.get("puttedAt");
+        MutableObject<Date> puttedAt = new MutableObject<>();
+        try {
+            String a = (String) response.get("puttedAt");
+            if (a != null) {
+                puttedAt.setValue(new StdDateFormat().parse(a));
+            }
+        } catch (ParseException e) {
+            handleException(e);
+        }
 
         Map<String, Object> result = new HashMap<String, Object>() {{
             put("status", status);
-            put("puttedAt", puttedAt);
+            put("puttedAt", puttedAt.getValue());
         }};
 
         result.forEach((key, value) -> logger.info("Result key:{}, Result value:{}", key, value));

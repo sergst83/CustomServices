@@ -46,7 +46,7 @@ public class PutToWarehouseHandler extends AbstractLogOrThrowWorkItemHandler {
 
         Map<String, Object> response = Collections.emptyMap();
         try {
-            response = restClient.checkPutWhOperation(workItem.getParameters());
+            response = restClient.createPutWhOperation(workItem.getParameters());
         } catch (Exception e) {
             handleException(e);
         }

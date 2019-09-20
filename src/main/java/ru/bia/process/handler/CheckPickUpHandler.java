@@ -2,6 +2,8 @@ package ru.bia.process.handler;
 
 import client.RestClient;
 import client.impl.RestClientImpl;
+import com.fasterxml.jackson.databind.util.StdDateFormat;
+import org.apache.commons.lang3.mutable.MutableObject;
 import org.jbpm.process.workitem.core.AbstractLogOrThrowWorkItemHandler;
 import org.jbpm.process.workitem.core.util.Wid;
 import org.jbpm.process.workitem.core.util.WidParameter;
@@ -11,6 +13,8 @@ import org.kie.api.runtime.process.WorkItemManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -56,14 +60,27 @@ public class CheckPickUpHandler extends AbstractLogOrThrowWorkItemHandler {
 
         String status = (String) response.get("status" );
         String numberPlate = (String) response.get("numberPlate");
-        Date arriveAt = (Date) response.get("arriveAt");
-        Date pickUpAt = (Date) response.get("pickUpAt");
+        MutableObject<Date> arriveAt = new MutableObject<>();
+        MutableObject<Date> pickUpAt = new MutableObject<>();
+        try {
+            String a = (String) response.get("arriveAt");
+            if (a != null) {
+                arriveAt.setValue(new StdDateFormat().parse(a));
+            }
+
+            String ss = (String) response.get("pickUpAt");
+            if (ss != null) {
+                pickUpAt.setValue(new StdDateFormat().parse(ss));
+            }
+        } catch (ParseException e) {
+            handleException(e);
+        }
 
         Map<String, Object> result = new HashMap<String, Object>() {{
             put("status", status);
-            put("arriveAt", arriveAt);
+            put("arriveAt", arriveAt.getValue());
             put("numberPlate", numberPlate);
-            put("pickUpAt", pickUpAt);
+            put("pickUpAt", pickUpAt.getValue());
             put("order", workItem.getParameter("order"));
         }};
 

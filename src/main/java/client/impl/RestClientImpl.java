@@ -41,7 +41,8 @@ public class RestClientImpl implements RestClient {
     @Override
     public Map<String, Object> checkPickUpOperation(Map<String, Object> parameters) throws IOException, RESTServiceException {
         String url = getUrl(parameters);
-        String id = (String) parameters.get("id");
+        Order order = (Order) parameters.get("order");
+        String id = order.getId();
         HttpGet get = new HttpGet(url + "/" + id);
         return performRequest(get);
     }
@@ -49,7 +50,8 @@ public class RestClientImpl implements RestClient {
     @Override
     public Map<String, Object> createPutWhOperation(Map<String, Object> parameters) throws IOException, RESTServiceException {
         String url = getUrl(parameters);
-        String id = (String) parameters.get("id");
+        Order order = (Order) parameters.get("order");
+        String id = order.getId();
         HttpPut httpPut = new HttpPut(url + "/warehouse/" + id);
         return performRequest(httpPut);
     }
@@ -57,7 +59,8 @@ public class RestClientImpl implements RestClient {
     @Override
     public Map<String, Object> checkPutWhOperation(Map<String, Object> parameters) throws IOException, RESTServiceException {
         String url = getUrl(parameters);
-        String id = (String) parameters.get("id");
+        Order order = (Order) parameters.get("order");
+        String id = order.getId();
         HttpGet httpGet = new HttpGet(url + "/warehouse/" + id);
         return performRequest(httpGet);
     }
